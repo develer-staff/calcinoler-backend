@@ -1,3 +1,3 @@
-# Calinoler
+# Calcinoler
 
-Calcinoler is a software for gesture of calcino matches in Develer
+Calcinoler is a software for management of calcino matches in Develer
