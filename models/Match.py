@@ -13,14 +13,12 @@ class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
-    person_id = db.Column(db.Integer, db.ForeignKey('sports.id'),nullable=False)
+    sport_id = db.Column(db.Integer, db.ForeignKey('sports.id'),nullable=False)
 
 
-class MatchSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    name = fields.String(required=True, validate=validate.Length(1))
-    nickname = fields.String(required=True, validate=validate.Length(1))
-    creation_date = fields.DateTime()
+class MatchSchema(ma.ModelSchema):
+    class Meta:
+        model = Match
 
 
 players = db.Table('match_players',
