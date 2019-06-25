@@ -18,11 +18,12 @@ class Match(db.Model):
 
 class MatchSchema(ma.ModelSchema):
     class Meta:
+        include_fk = True
         model = Match
-
+    
+    sport_id = fields.Integer(dump_only=True, required=True)
 
 players = db.Table('match_players',
     db.Column('match_id', db.Integer, db.ForeignKey('matches.id'), primary_key=True),
     db.Column('player_id', db.Integer, db.ForeignKey('players.id'), primary_key=True),
-    db.UniqueConstraint('match_id', 'player_id', name='unique_player_in_match')
 )
