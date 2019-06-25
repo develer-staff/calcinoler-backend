@@ -11,7 +11,7 @@ class Sport(db.Model):
     __tablename__ = 'sports'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), nullable=False)
-    matches = db.relationship('Match', backref='sport', lazy=True)
+    #matches = db.relationship('matches', backref='sports', lazy=True)
 
 
 
