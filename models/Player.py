@@ -10,6 +10,7 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), nullable=False)
     nickname = db.Column(db.String(30), unique=True, nullable=False)
+    nDisonors = db.Column('n_disonors', db.Integer, nullable=False)
 
 
 class PlayerSchema(ma.ModelSchema):
