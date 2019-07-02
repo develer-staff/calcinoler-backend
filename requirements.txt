@@ -7,3 +7,4 @@ flask_sqlalchemy==2.4.0
 flask_marshmallow==0.10.1
 marshmallow-sqlalchemy==0.16.4
 psycopg2==2.7.5
+slackclient==2.0.0
