@@ -2,7 +2,6 @@ from flask import Flask
 from flask_migrate import Migrate
 
 from api import bp
-from commands.players import players_cli
 
 
 def create_app(config_file=None):
@@ -17,7 +16,5 @@ def create_app(config_file=None):
     Migrate(app, db)
 
     app.register_blueprint(bp, url_prefix='/api')
-
-    app.cli.add_command(players_cli)
 
     return app
