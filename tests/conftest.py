@@ -1,4 +1,5 @@
 import pytest
+import click
 
 from app import create_app
 
@@ -6,7 +7,6 @@ from app import create_app
 @pytest.fixture
 def app():
     app = create_app("config_test.py")
-    print(app.config)
     yield app
 
 
@@ -14,8 +14,7 @@ def app():
 def clear_data(app):
     with app.app_context():
         from database import db
-        meta = db.metadata
-        for table in reversed(meta.sorted_tables):
-            print('Clear table %s' % table)
+        for table in reversed(db.metadata.sorted_tables):
+            click.echo('Clear table {}'.format(table))
             db.session.execute(table.delete())
         db.session.commit()

@@ -2,10 +2,10 @@ from slack import WebClient, errors
 
 
 class SlackHelper:
-    def __init__(self, token):
+    def __init__(self, token: str):
         self.slack_client = WebClient(token=token)
 
-    def get_users(self, search=None, field=None) -> list:
+    def get_users(self, search: str = None, field: str = None) -> list:
         try:
             resp = self.slack_client.users_list()
         except errors.SlackApiError as e:
@@ -19,7 +19,7 @@ class SlackHelper:
             return [u[field] for u in slack_users if field in u]
         return slack_users
 
-    def get_user(self, slack_id):
+    def get_user(self, slack_id: str):
         try:
             resp = self.slack_client.users_profile_get(user=slack_id)
         except errors.SlackApiError as e:
@@ -29,7 +29,7 @@ class SlackHelper:
         return resp['profile']
 
     @staticmethod
-    def search_user(self, users, search) -> list:
+    def search_user(self, users: dict, search: str) -> list:
         res = []
         for u in users:
             for v in u:

@@ -7,9 +7,8 @@ from api import bp
 def create_app(config_file=None):
     app = Flask(__name__)
     if config_file is None:
-        app.config.from_pyfile('config.py')
-    else:
-        app.config.from_pyfile(config_file)
+        config_file = 'config.py'
+    app.config.from_pyfile(config_file)
 
     from database import db
     db.init_app(app)
