@@ -1,7 +1,22 @@
+from typing import List
+
 from models.player import Player
 
+players_list = List[Player]
 
-def enrich_slack_users_with_players(slack_users: list, players: list) -> list:
+
+def enrich_slack_users_with_players(slack_users: list,
+                                    players: players_list) -> players_list:
+    """Takes a list of slack users and a list of players and merge each player with
+        the corresponding slack user by Slack's ID.
+
+        slack_users (list(dict)):
+            Slack users from Slack's Api
+        players (list(Player)):
+            List of players
+
+        Return list(Player) with merged data
+    """
     players = {p.slack_id: p for p in players}
     res = []
     for su in slack_users:
