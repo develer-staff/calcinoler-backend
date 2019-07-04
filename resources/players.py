@@ -1,3 +1,5 @@
+import logging
+
 from flask import request, current_app
 from flask_restful import Resource
 
@@ -5,6 +7,7 @@ from database import db
 from models.player import Player, PlayerSchema
 from utils.slackhelper import SlackHelper, SlackRequestFailed
 from utils.players import enrich_slack_users_with_players
+from utils.response import Response
 
 player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
@@ -17,25 +20,38 @@ class PlayersResource(Resource):
         try:
             slack_users = slack.get_users(search=request.args.get("s"))
         except SlackRequestFailed as e:
-            return {'errors': {'general': [str(e)]}}, 503
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
         players = enrich_slack_users_with_players(slack_users, players)
-        res = players_schema.dump(players).data
-        return {'data': res}
+
+        return Response.success(players_schema.dump(players).data)
 
     def post(self):
+        slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         request_data = request.get_json(force=True)
         if not request_data:
-            return {'errors': {'general': ['No data provided']}}, 400
+            return Response.error({'general': [Response.BODY_EMPTY]}, 400)
+
         player, errors = player_schema.load(request_data)
         if errors:
-            return {"errors": errors}, 422
+            return Response.error(errors, 422)
+
+        try:
+            slack_user = slack.get_user(player.slack_id)
+        except SlackRequestFailed as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
+
+        if Player.query.filter_by(
+                slack_id=player.slack_id).first() is not None:
+            return Response.error(
+                {"general": [Response.ALREADY_EXISTS.format("Player")]}, 400)
 
         db.session.add(player)
         db.session.commit()
+        player.merge_slack_user(slack_user)
 
-        result = player_schema.dump(player).data
-
-        return {'data': result}, 201
+        return Response.success(player_schema.dump(player).data, 201)
 
 
 class PlayerResource(Resource):
@@ -43,40 +59,55 @@ class PlayerResource(Resource):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         player = Player.query.get(id)
         if not player:
-            return {"errors": {'general': ["Player not found"]}}, 404
+            return Response.error(
+                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
         try:
             slack_user = slack.get_user(player.slack_id)
-        except SlackRequestFailed:
-            return {'errors': {'general': ['Slack request failed']}}, 503
+        except SlackRequestFailed as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
+
         player.merge_slack_user(slack_user)
-        res = player_schema.dump(player).data
-        return {'data': res}
+
+        return Response.success(player_schema.dump(player).data)
 
     def put(self, id):
+        slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         player = Player.query.get(id)
         if not player:
-            return {"errors": {'general': ["Player not found"]}}, 404
+            return Response.error(
+                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
+
         request_data = request.get_json(force=True)
         if not request_data:
-            return {'errors': {'general': ['No data provided']}}, 400
+            return Response.error({'general': [Response.BODY_EMPTY]}, 400)
+
+        if "slack_id" in request_data:
+            del request_data["slack_id"]
+
         player, errors = player_schema.load(request_data,
                                             instance=player,
                                             partial=True)
         if errors:
-            return {"errors": errors}, 422
+            return Response.error(errors, 422)
+
+        try:
+            slack_user = slack.get_user(player.slack_id)
+        except SlackRequestFailed as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
 
         db.session.commit()
+        player.merge_slack_user(slack_user)
 
-        res = player_schema.dump(player).data
-
-        return {'data': res}
+        return Response.success(player_schema.dump(player).data)
 
     def delete(self, id):
         player = Player.query.get(id)
         if not player:
-            return {"errors": {'general': ["Player not found"]}}, 404
-        res = player_schema.dump(player).data
+            return Response.error(
+                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
         db.session.delete(player)
         db.session.commit()
 
-        return {'data': res}
+        return Response.success(player_schema.dump(player).data)
