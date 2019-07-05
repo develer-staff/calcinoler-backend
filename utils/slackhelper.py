@@ -19,7 +19,7 @@ class SlackHelper:
         self.slack_client = WebClient(token=token)
 
     def get_users(self, search: str = None, field: str = None) -> list:
-        """Calls Slack endpoint `users.list`.
+        """Return all Slack users.
 
             search (str):
                 if not None the function returns only Slack users
@@ -31,7 +31,7 @@ class SlackHelper:
             Returns a list of Slack users or
             a list of field values from the Slack Api.
 
-            Raises SlackRequestFailed if request fail.
+            Raises SlackRequestFailed if error occured.
         """
         try:
             resp = self.slack_client.users_list()
@@ -47,14 +47,14 @@ class SlackHelper:
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
-        """Calls Slack endpoint `users.profile.get`.
+        """Return a Slack user by slack_id.
 
             slack_id (str):
                 Slack user ID.
 
             Returns a dict representing Slack user.
 
-            Raises SlackRequestFailed if request fail.
+            Raises SlackRequestFailed if error occured.
         """
         try:
             resp = self.slack_client.users_profile_get(user=slack_id)
