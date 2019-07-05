@@ -23,6 +23,11 @@ class Player(db.Model):
         super(Player, self).__init__(**kwargs)
 
     def merge_slack_user(self, slack_user: dict):
+        """Populates Player instance's name and nickname fields
+
+            slack_user (dict):
+                representing Slack user
+        """
         if self.slack_id is None:
             self.slack_id = slack_user.get('id', "")
 

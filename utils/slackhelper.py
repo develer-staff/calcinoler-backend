@@ -2,7 +2,9 @@ from slack import WebClient, errors
 
 
 class SlackHelper:
-    """Wraps official Slack's client functions and add additional features:
+    """Wraps official Slack client functions and add the following
+        additional features:
+
         - search in users list
         - extract only one field
     """
@@ -17,17 +19,17 @@ class SlackHelper:
         self.slack_client = WebClient(token=token)
 
     def get_users(self, search: str = None, field: str = None) -> list:
-        """Calls Slack's endpoint `users.list`.
+        """Calls Slack endpoint `users.list`.
 
             search (str):
-                if is not None the function returns only slack's users
-                who match string at least one field.
+                if not None the function returns only Slack users
+                who contains the given string at least in one field.
             field (str):
-                if is not None the function will return a list containing
-                only specified field.
+                if not None the function returns a list containing
+                only the specified field.
 
-            Returns list of slack's users or
-            a list of field value from Slack's Api.
+            Returns a list of Slack users or
+            a list of field values from the Slack Api.
 
             Raises SlackRequestFailed if request fail.
         """
@@ -45,12 +47,12 @@ class SlackHelper:
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
-        """Calls Slack's endpoint `users.profile.get`.
+        """Calls Slack endpoint `users.profile.get`.
 
             slack_id (str):
-                Slack's ID.
+                Slack user ID.
 
-            Returns a dict representing Slack's user.
+            Returns a dict representing Slack user.
 
             Raises SlackRequestFailed if request fail.
         """
@@ -67,7 +69,7 @@ class SlackHelper:
         """Searches user by string in all fields.
 
             users (list(dict)):
-                Slack users from Slack's Api.
+                Slack users from Slack Api.
             search (str):
                 String to find in fields.
 

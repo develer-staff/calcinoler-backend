@@ -7,15 +7,15 @@ players_list = List[Player]
 
 def enrich_slack_users_with_players(slack_users: list,
                                     players: players_list) -> players_list:
-    """Takes a list of slack users and a list of players and merge each player with
-        the corresponding slack user by Slack's ID.
+    """Takes a list of Slack users and a list of players and merge each player with
+        the corresponding Slack user by Slack ID.
 
         slack_users (list(dict)):
-            Slack users from Slack's Api
+            Slack users from Slack Api
         players (list(Player)):
             List of players
 
-        Return list(Player) with merged data
+        Returns list(Player) with merged data
     """
     players = {p.slack_id: p for p in players}
     res = []
