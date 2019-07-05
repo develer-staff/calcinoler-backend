@@ -2,7 +2,9 @@ from slack import WebClient, errors
 
 
 class SlackHelper:
-    """Wraps official Slack's client functions for grater dynamism.
+    """Wraps official Slack's client functions and add additional features:
+        - search in users list
+        - extract only one field
     """
 
     def __init__(self, token: str):
