@@ -7,24 +7,7 @@ from database import db
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_users')
-def test_data_in_get(mock_get_users, app):
-    mock_get_users.return_value = [{
-        "id": "SLACK_TEST",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
-        }
-    }]
-
-    rv = app.test_client().get('/api/players/')
-    json_data = json.loads(rv.data)
-
-    assert 'data' in json_data
-    assert isinstance(json_data['data'], list)
-
-
-@mock.patch('utils.slackhelper.SlackHelper.get_users')
-def test_players_in_data(mock_get_users, app):
+def test_get_many(mock_get_users, app):
     mock_get_users.return_value = [{
         "id": "TEST1",
         "profile": {
@@ -41,14 +24,44 @@ def test_players_in_data(mock_get_users, app):
         db.session.add(player)
         db.session.flush()
 
-        rv = app.test_client().get('/api/players/')
+        rv = app.test_client().get('/api/players/', follow_redirects=True)
 
     json_data = json.loads(rv.data)
+
+    assert isinstance(json_data['data'], list)
     assert len(json_data['data']) == 1
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_player_post(mock_get_user, app):
+def test_get_single(mock_get_user, app):
+    mock_get_user.return_value = {
+        "id": "TEST1",
+        "profile": {
+            "real_name": "ogek",
+            "display_name": "Giuseppe"
+        }
+    }
+
+    assert_player_count_x(app, 0)
+
+    player = Player()
+    player.slack_id = "TEST1"
+    with app.app_context():
+        db.session.add(player)
+        db.session.flush()
+        id = player.id
+
+        rv = app.test_client().get('/api/players/{}/'.format(id),
+                                   follow_redirects=True)
+
+    json_data = json.loads(rv.data)
+
+    assert isinstance(json_data['data'], dict)
+    assert json_data['data']['slack_id'] == player.slack_id
+
+
+@mock.patch('utils.slackhelper.SlackHelper.get_user')
+def test_post(mock_get_user, app):
     mock_get_user.return_value = {
         "id": "TEST1",
         "profile": {
@@ -94,14 +107,37 @@ def test_put(mock_get_user, app):
         data = dict(dishonors=10)
 
         with app.test_client() as tc:
-            _ = tc.put('/api/players/{}/'.format(id),
-                       data=json.dumps(data),
-                       follow_redirects=True)
+            rv = tc.put('/api/players/{}/'.format(id),
+                        data=json.dumps(data),
+                        follow_redirects=True)
+        json_data = json.loads(rv.data)
 
         p = Player.query.get(id)
 
     assert player.slack_id == p.slack_id
     assert p.dishonors == data['dishonors']
+    assert json_data['data']['dishonors'] == data['dishonors']
+
+
+def test_delete(app):
+    assert_player_count_x(app, 0)
+
+    with app.app_context():
+        player = Player()
+        player.slack_id = "TEST"
+        db.session.add(player)
+        db.session.flush()
+        id = player.id
+
+        with app.test_client() as tc:
+            rv = tc.delete('/api/players/{}/'.format(id),
+                           follow_redirects=True)
+        json_data = json.loads(rv.data)
+
+        p = Player.query.get(id)
+
+    assert p is None
+    assert json_data['data']['slack_id'] == player.slack_id
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_users')
