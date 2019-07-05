@@ -65,7 +65,7 @@ class SlackHelper:
         return resp['profile']
 
     @staticmethod
-    def __search_user(users: list, search: str) -> list:
+    def _search_user(users: list, search: str) -> list:
         """Searches user by string in all fields.
 
             users (list(dict)):
