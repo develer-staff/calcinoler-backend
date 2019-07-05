@@ -1,7 +1,7 @@
 """Renamed column `n_disonors` in `dishonors`
 
 Revision ID: 5540202b6321
-Revises: 4bc9c7191c9b
+Revises: b7d74ff3d88a
 Create Date: 2019-07-01 17:52:06.735857
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '5540202b6321'
-down_revision = '4bc9c7191c9b'
+down_revision = 'b7d74ff3d88a'
 branch_labels = None
 depends_on = None
 
