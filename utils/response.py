@@ -1,4 +1,4 @@
-class Response():
+class Response:
     """Util class for standardize response schema"""
 
     REQUEST_FAILED = "Request failed, try again later."
