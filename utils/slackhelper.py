@@ -18,15 +18,12 @@ class SlackHelper:
         """
         self.slack_client = WebClient(token=token)
 
-    def get_users(self, search: str = None, field: str = None) -> list:
+    def get_users(self, search: str = None) -> list:
         """Return all Slack users.
 
             search (str):
                 if not None the function returns only Slack users
                 who contains the given string at least in one field.
-            field (str):
-                if not None the function returns a list containing
-                only the specified field.
 
             Returns a list of Slack users or
             a list of field values from the Slack Api.
@@ -42,8 +39,6 @@ class SlackHelper:
         slack_users = resp['members']
         if search:
             slack_users = self.search_user(slack_users, search)
-        if field:
-            return [u[field] if field in u else None for u in slack_users]
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
