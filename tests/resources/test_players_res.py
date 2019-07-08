@@ -16,8 +16,6 @@ def test_get_many(mock_get_users, app):
         }
     }]
 
-    assert_player_count_x(app, 0)
-
     player = Player()
     player.slack_id = "TEST1"
     with app.app_context():
@@ -42,16 +40,13 @@ def test_get_single(mock_get_user, app):
         }
     }
 
-    assert_player_count_x(app, 0)
-
     player = Player()
     player.slack_id = "TEST1"
     with app.app_context():
         db.session.add(player)
         db.session.flush()
-        id = player.id
 
-        rv = app.test_client().get('/api/players/{}/'.format(id),
+        rv = app.test_client().get('/api/players/{}/'.format(player.id),
                                    follow_redirects=True)
 
     json_data = json.loads(rv.data)
@@ -70,9 +65,7 @@ def test_post(mock_get_user, app):
         }
     }
 
-    assert_player_count_x(app, 0)
-
-    data = dict(slack_id="TEST", dishonors=2)
+    data = {'slack_id': 'TEST', 'dishonors': 2}
 
     with app.test_client() as tc:
         rv = tc.post('/api/players/',
@@ -80,7 +73,6 @@ def test_post(mock_get_user, app):
                      follow_redirects=True)
     json_data = json.loads(rv.data)
 
-    assert_player_count_x(app, 1)
     assert json_data['data']['slack_id'] == data['slack_id']
     with app.app_context():
         p = Player.query.filter_by(slack_id=data['slack_id'])
@@ -102,17 +94,16 @@ def test_put(mock_get_user, app):
         player.slack_id = "TEST"
         db.session.add(player)
         db.session.flush()
-        id = player.id
 
-        data = dict(dishonors=10)
+        data = {'dishonors': 10}
 
         with app.test_client() as tc:
-            rv = tc.put('/api/players/{}/'.format(id),
+            rv = tc.put('/api/players/{}/'.format(player.id),
                         data=json.dumps(data),
                         follow_redirects=True)
         json_data = json.loads(rv.data)
 
-        p = Player.query.get(id)
+        p = Player.query.get(player.id)
 
     assert player.slack_id == p.slack_id
     assert p.dishonors == data['dishonors']
@@ -120,21 +111,19 @@ def test_put(mock_get_user, app):
 
 
 def test_delete(app):
-    assert_player_count_x(app, 0)
 
     with app.app_context():
         player = Player()
         player.slack_id = "TEST"
         db.session.add(player)
         db.session.flush()
-        id = player.id
 
         with app.test_client() as tc:
-            rv = tc.delete('/api/players/{}/'.format(id),
+            rv = tc.delete('/api/players/{}/'.format(player.id),
                            follow_redirects=True)
         json_data = json.loads(rv.data)
 
-        p = Player.query.get(id)
+        p = Player.query.get(player.id)
 
     assert p is None
     assert json_data['data']['slack_id'] == player.slack_id
@@ -160,7 +149,7 @@ def test_post_empty_data_error(app):
 
 
 def test_post_wrong_data_error(app):
-    data = dict(dishonors=1)
+    data = {'dishonors': 1}
 
     rv = app.test_client().post('/api/players/', data=json.dumps(data))
     json_data = json.loads(rv.data)
@@ -173,7 +162,7 @@ def test_post_wrong_data_error(app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_post_slack_error(mock_get_user, app):
     mock_get_user.side_effect = SlackRequestFailed()
-    data = dict(slack_id="TEST", dishonors=2)
+    data = {'slack_id': 'TEST', 'dishonors': 2}
 
     rv = app.test_client().post('/api/players/', data=json.dumps(data))
     json_data = json.loads(rv.data)
@@ -194,7 +183,7 @@ def test_post_already_exists_error(mock_get_user, app):
             "display_name": "Giuseppe"
         }
     }
-    data = dict(slack_id="TEST", dishonors=2)
+    data = {'slack_id': "TEST", 'dishonors': 2}
 
     with app.app_context():
         db.session.add(player)
@@ -218,7 +207,7 @@ def test_get_not_found_error(app):
 
 def test_put_not_found_error(app):
 
-    data = dict(dishonors=2)
+    data = {'dishonors': 2}
 
     rv = app.test_client().put('/api/players/7565/', data=json.dumps(data))
     json_data = json.loads(rv.data)
@@ -244,7 +233,7 @@ def test_put_empty_data_error(app):
 
 
 def test_put_wrong_data_error(app):
-    data = dict(dishonors=None)
+    data = {'dishonors': None}
     player = Player()
     player.slack_id = "TEST"
 
@@ -265,7 +254,7 @@ def test_put_slack_error(mock_get_user, app):
     player = Player()
     player.slack_id = "TEST"
     mock_get_user.side_effect = SlackRequestFailed()
-    data = dict(dishonors=3)
+    data = {'dishonors': 3}
 
     with app.app_context():
         db.session.add(player)
@@ -284,8 +273,3 @@ def test_delete_not_found_error(app):
 
     assert 'errors' in json_data
     assert rv.status_code == 404
-
-
-def assert_player_count_x(app, x: int):
-    with app.app_context():
-        assert Player.query.count() == x

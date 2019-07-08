@@ -17,8 +17,8 @@ def app():
 @pytest.fixture(autouse=True)
 def clear_data(app):
     with app.app_context():
-        from database import db
         for table in reversed(db.metadata.sorted_tables):
             click.echo('Clear table {}'.format(table))
             db.session.execute(table.delete())
+            assert db.session.query(table).count() == 0
         db.session.commit()
