@@ -18,7 +18,7 @@ class PlayersResource(Resource):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         players = Player.query.all()
         try:
-            slack_users = slack.get_users(search=request.args.get("s"))
+            slack_users = slack.get_users(search=request.args.get('s'))
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
@@ -45,7 +45,7 @@ class PlayersResource(Resource):
         if Player.query.filter_by(
                 slack_id=player.slack_id).first() is not None:
             return Response.error(
-                {"general": [Response.ALREADY_EXISTS.format("Player")]}, 400)
+                {'general': [Response.ALREADY_EXISTS.format('Player')]}, 400)
 
         db.session.add(player)
         db.session.commit()
@@ -60,7 +60,7 @@ class PlayerResource(Resource):
         player = Player.query.get(id)
         if not player:
             return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
+                {'general': [Response.NOT_FOUND.format('Player')]}, 404)
         try:
             slack_user = slack.get_user(player.slack_id)
         except SlackRequestFailed as e:
@@ -76,14 +76,14 @@ class PlayerResource(Resource):
         player = Player.query.get(id)
         if not player:
             return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
+                {'general': [Response.NOT_FOUND.format('Player')]}, 404)
 
         request_data = request.get_json(force=True)
         if not request_data:
             return Response.error({'general': [Response.BODY_EMPTY]}, 400)
 
-        if "slack_id" in request_data:
-            del request_data["slack_id"]
+        if 'slack_id' in request_data:
+            del request_data['slack_id']
 
         player, errors = player_schema.load(request_data,
                                             instance=player,
@@ -106,7 +106,7 @@ class PlayerResource(Resource):
         player = Player.query.get(id)
         if not player:
             return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
+                {'general': [Response.NOT_FOUND.format('Player')]}, 404)
         db.session.delete(player)
         db.session.commit()
 

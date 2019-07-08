@@ -13,12 +13,12 @@ class Player(db.Model):
     dishonors = db.Column(db.Integer,
                           nullable=False,
                           default=0,
-                          server_default="0")
+                          server_default='0')
     nickname = None
     name = None
 
     def __init__(self, **kwargs):
-        if kwargs.get("dishonors", None) is None:
+        if kwargs.get('dishonors', None) is None:
             kwargs['dishonors'] = self.__table__.c.dishonors.default.arg
         super(Player, self).__init__(**kwargs)
 
@@ -29,13 +29,13 @@ class Player(db.Model):
                 representing Slack user
         """
         if self.slack_id is None:
-            self.slack_id = slack_user.get('id', "")
+            self.slack_id = slack_user.get('id', '')
 
-        self.nickname = slack_user.get('real_name', "")
+        self.nickname = slack_user.get('real_name', '')
 
-        if "display_name" in slack_user:
+        if 'display_name' in slack_user:
             self.name = slack_user['display_name']
-        elif "display_name" in slack_user.get('profile', {}):
+        elif 'display_name' in slack_user.get('profile', {}):
             self.name = slack_user['profile']['display_name']
         else:
             self.name = self.nickname

@@ -9,17 +9,17 @@ from database import db
 @mock.patch('utils.slackhelper.SlackHelper.get_users')
 def test_get_many(mock_get_users, app):
     mock_get_users.return_value = [{
-        "id": "TEST1",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
+        'id': 'TEST1',
+        'profile': {
+            'real_name': 'ogek',
+            'display_name': 'Giuseppe'
         }
     }]
 
     assert_player_count_x(app, 0)
 
     player = Player()
-    player.slack_id = "TEST1"
+    player.slack_id = 'TEST1'
     with app.app_context():
         db.session.add(player)
         db.session.flush()
@@ -35,17 +35,17 @@ def test_get_many(mock_get_users, app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_get_single(mock_get_user, app):
     mock_get_user.return_value = {
-        "id": "TEST1",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
+        'id': 'TEST1',
+        'profile': {
+            'real_name': 'ogek',
+            'display_name': 'Giuseppe'
         }
     }
 
     assert_player_count_x(app, 0)
 
     player = Player()
-    player.slack_id = "TEST1"
+    player.slack_id = 'TEST1'
     with app.app_context():
         db.session.add(player)
         db.session.flush()
@@ -63,16 +63,16 @@ def test_get_single(mock_get_user, app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_post(mock_get_user, app):
     mock_get_user.return_value = {
-        "id": "TEST1",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
+        'id': 'TEST1',
+        'profile': {
+            'real_name': 'ogek',
+            'display_name': 'Giuseppe'
         }
     }
 
     assert_player_count_x(app, 0)
 
-    data = dict(slack_id="TEST", dishonors=2)
+    data = dict(slack_id='TEST', dishonors=2)
 
     with app.test_client() as tc:
         rv = tc.post('/api/players/',
@@ -90,16 +90,16 @@ def test_post(mock_get_user, app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_put(mock_get_user, app):
     mock_get_user.return_value = {
-        "id": "TEST1",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
+        'id': 'TEST1',
+        'profile': {
+            'real_name': 'ogek',
+            'display_name': 'Giuseppe'
         }
     }
 
     with app.app_context():
         player = Player()
-        player.slack_id = "TEST"
+        player.slack_id = 'TEST'
         db.session.add(player)
         db.session.flush()
         id = player.id
@@ -124,7 +124,7 @@ def test_delete(app):
 
     with app.app_context():
         player = Player()
-        player.slack_id = "TEST"
+        player.slack_id = 'TEST'
         db.session.add(player)
         db.session.flush()
         id = player.id
@@ -173,7 +173,7 @@ def test_post_wrong_data_error(app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_post_slack_error(mock_get_user, app):
     mock_get_user.side_effect = SlackRequestFailed()
-    data = dict(slack_id="TEST", dishonors=2)
+    data = dict(slack_id='TEST', dishonors=2)
 
     rv = app.test_client().post('/api/players/', data=json.dumps(data))
     json_data = json.loads(rv.data)
@@ -185,16 +185,16 @@ def test_post_slack_error(mock_get_user, app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_post_already_exists_error(mock_get_user, app):
     player = Player()
-    player.slack_id = "TEST"
+    player.slack_id = 'TEST'
 
     mock_get_user.return_value = {
-        "id": "TEST",
-        "profile": {
-            "real_name": "ogek",
-            "display_name": "Giuseppe"
+        'id': 'TEST',
+        'profile': {
+            'real_name': 'ogek',
+            'display_name': 'Giuseppe'
         }
     }
-    data = dict(slack_id="TEST", dishonors=2)
+    data = dict(slack_id='TEST', dishonors=2)
 
     with app.app_context():
         db.session.add(player)
@@ -229,7 +229,7 @@ def test_put_not_found_error(app):
 
 def test_put_empty_data_error(app):
     player = Player()
-    player.slack_id = "TEST"
+    player.slack_id = 'TEST'
 
     with app.app_context():
         db.session.add(player)
@@ -246,7 +246,7 @@ def test_put_empty_data_error(app):
 def test_put_wrong_data_error(app):
     data = dict(dishonors=None)
     player = Player()
-    player.slack_id = "TEST"
+    player.slack_id = 'TEST'
 
     with app.app_context():
         db.session.add(player)
@@ -263,7 +263,7 @@ def test_put_wrong_data_error(app):
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_put_slack_error(mock_get_user, app):
     player = Player()
-    player.slack_id = "TEST"
+    player.slack_id = 'TEST'
     mock_get_user.side_effect = SlackRequestFailed()
     data = dict(dishonors=3)
 

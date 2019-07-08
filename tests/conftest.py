@@ -5,9 +5,9 @@ from app import create_app
 from database import db
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def app():
-    app = create_app("config_test.py")
+    app = create_app('config_test.py')
     with app.app_context():
         db.init_app(app)
         db.create_all()
