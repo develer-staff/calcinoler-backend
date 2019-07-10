@@ -38,7 +38,7 @@ class SlackHelper:
             raise SlackRequestFailed(resp.get('error', 'Request failed'))
         slack_users = resp['members']
         if search:
-            slack_users = self.search_user(slack_users, search)
+            slack_users = SlackHelper._search_user(slack_users, search)
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
@@ -62,6 +62,7 @@ class SlackHelper:
     @staticmethod
     def _search_user(users: list, search: str) -> list:
         """Searches user by string in all fields.
+            No deep search.
 
             users (list(dict)):
                 Slack users from Slack Api.
@@ -72,11 +73,14 @@ class SlackHelper:
             string at least in one field.
         """
         res = []
-        for u in users:
-            for v in u:
-                if search in v:
-                    res.append(u)
-                    continue
+        for user in users:
+            for key in user:
+                if user not in res:
+                    try:
+                        if search in user[key]:
+                            res.append(user)
+                    except Exception:
+                        pass
         return res
 
 
