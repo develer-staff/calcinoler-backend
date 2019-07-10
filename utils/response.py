@@ -5,6 +5,7 @@ class Response:
     BODY_EMPTY = "Request body is empty."
     ALREADY_EXISTS = "{} already exists."
     NOT_FOUND = "{} not found."
+    INVALID = "{} is invalid."
 
     @staticmethod
     def success(data: list or dict, code: int = 200) -> (dict, int):
