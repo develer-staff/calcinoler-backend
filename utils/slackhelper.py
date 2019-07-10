@@ -33,9 +33,7 @@ class SlackHelper:
         try:
             resp = self.slack_client.users_list()
         except errors.SlackApiError as e:
-            raise SlackRequestFailed(e)
-        if not resp['ok']:
-            raise SlackRequestFailed(resp.get('error', 'Request failed'))
+            raise SlackRequestFailed(e.response.get('error', 'unknown_error'))
         slack_users = resp['members']
         if search:
             slack_users = SlackHelper._search_user(slack_users, search)
@@ -54,9 +52,10 @@ class SlackHelper:
         try:
             resp = self.slack_client.users_profile_get(user=slack_id)
         except errors.SlackApiError as e:
+            err = e.response.get('error', 'unknown_error')
+            if err == "user_not_found":
+                raise SlackUserNotFound(e)
             raise SlackRequestFailed(e)
-        if not resp['ok']:
-            raise SlackRequestFailed(resp.get('error', 'Request failed'))
         return resp['profile']
 
     @staticmethod
@@ -85,4 +84,8 @@ class SlackHelper:
 
 
 class SlackRequestFailed(Exception):
+    pass
+
+
+class SlackUserNotFound(Exception):
     pass

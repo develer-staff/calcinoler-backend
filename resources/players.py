@@ -5,7 +5,7 @@ from flask_restful import Resource
 
 from database import db
 from models.player import Player, PlayerSchema
-from utils.slackhelper import SlackHelper, SlackRequestFailed
+from utils.slackhelper import SlackHelper, SlackRequestFailed, SlackUserNotFound
 from utils.players import enrich_slack_users_with_players
 from utils.response import Response
 
@@ -32,6 +32,10 @@ class PlayerResource(Resource):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         try:
             slack_user = slack.get_user(slack_id)
+        except SlackUserNotFound as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error(
+                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
@@ -48,6 +52,10 @@ class PlayerResource(Resource):
 
         try:
             slack_user = slack.get_user(slack_id)
+        except SlackUserNotFound as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error(
+                {'slack_id': Response.INVALID.format("Slack ID")}, 422)
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
