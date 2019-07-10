@@ -94,6 +94,39 @@ def test_get_single_player_not_exists_in_db(mock_get_user, app):
     assert isinstance(json_data['data'], dict)
 
 
+@mock.patch('utils.slackhelper.SlackHelper.get_users')
+def test_get_slack_error(mock_get_users, app):
+    mock_get_users.side_effect = SlackRequestFailed()
+
+    rv = app.test_client().get('/api/players/')
+    json_data = json.loads(rv.data)
+
+    assert 'errors' in json_data
+    assert rv.status_code == 503
+
+
+@mock.patch('utils.slackhelper.SlackHelper.get_users')
+def test_get_single_slack_error(mock_get_users, app):
+    mock_get_users.side_effect = SlackRequestFailed()
+
+    rv = app.test_client().get('/api/players/TEST/')
+    json_data = json.loads(rv.data)
+
+    assert 'errors' in json_data
+    assert rv.status_code == 503
+
+
+@mock.patch('utils.slackhelper.SlackHelper.get_user')
+def test_get_not_found_error(mock_get_user, app):
+    mock_get_user.side_effect = SlackUserNotFound()
+
+    rv = app.test_client().get('/api/players/TEST/')
+    json_data = json.loads(rv.data)
+
+    assert 'errors' in json_data
+    assert rv.status_code == 404
+
+
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
 def test_patch(mock_get_user, app):
     mock_get_user.return_value = {
@@ -152,39 +185,6 @@ def test_patch_create(mock_get_user, app):
     assert slack_id == p.slack_id
     assert p.dishonors == data['dishonors']
     assert json_data['data']['dishonors'] == data['dishonors']
-
-
-@mock.patch('utils.slackhelper.SlackHelper.get_users')
-def test_get_slack_error(mock_get_users, app):
-    mock_get_users.side_effect = SlackRequestFailed()
-
-    rv = app.test_client().get('/api/players/')
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 503
-
-
-@mock.patch('utils.slackhelper.SlackHelper.get_users')
-def test_get_single_slack_error(mock_get_users, app):
-    mock_get_users.side_effect = SlackRequestFailed()
-
-    rv = app.test_client().get('/api/players/TEST/')
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 503
-
-
-@mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_get_not_found_error(mock_get_user, app):
-    mock_get_user.side_effect = SlackUserNotFound()
-
-    rv = app.test_client().get('/api/players/TEST/')
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 404
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
