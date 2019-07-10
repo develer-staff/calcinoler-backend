@@ -26,84 +26,57 @@ class PlayersResource(Resource):
 
         return Response.success(players_schema.dump(players).data)
 
-    def post(self):
-        slack = SlackHelper(current_app.config['SLACK_TOKEN'])
-        request_data = request.get_json(force=True)
-        if not request_data:
-            return Response.error({'general': [Response.BODY_EMPTY]}, 400)
-
-        player, errors = player_schema.load(request_data)
-        if errors:
-            return Response.error(errors, 422)
-
-        try:
-            slack_user = slack.get_user(player.slack_id)
-        except SlackRequestFailed as e:
-            logging.error('Slack Api Error: {}'.format(str(e)))
-            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
-
-        if Player.query.filter_by(
-                slack_id=player.slack_id).first() is not None:
-            return Response.error(
-                {"general": [Response.ALREADY_EXISTS.format("Player")]}, 400)
-
-        db.session.add(player)
-        db.session.commit()
-        player.merge_slack_user(slack_user)
-
-        return Response.success(player_schema.dump(player).data, 201)
-
 
 class PlayerResource(Resource):
-    def get(self, id):
+    def get(self, slack_id):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
-        player = Player.query.get(id)
-        if not player:
-            return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
         try:
-            slack_user = slack.get_user(player.slack_id)
+            slack_user = slack.get_user(slack_id)
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
 
-        player.merge_slack_user(slack_user)
+        player = Player.query.get(slack_id)
+        if player is None:
+            player = Player()
 
+        player.merge_slack_user(slack_user)
         return Response.success(player_schema.dump(player).data)
 
-    def put(self, id):
+    def patch(self, slack_id):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
-        player = Player.query.get(id)
-        if not player:
-            return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
+
+        try:
+            slack_user = slack.get_user(slack_id)
+        except SlackRequestFailed as e:
+            logging.error('Slack Api Error: {}'.format(str(e)))
+            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
 
         request_data = request.get_json(force=True)
         if not request_data:
             return Response.error({'general': [Response.BODY_EMPTY]}, 400)
 
-        if "slack_id" in request_data:
-            del request_data["slack_id"]
-
-        player, errors = player_schema.load(request_data,
-                                            instance=player,
-                                            partial=True)
+        errors = player_schema.validate(request_data)
         if errors:
             return Response.error(errors, 422)
 
-        try:
-            slack_user = slack.get_user(player.slack_id)
-        except SlackRequestFailed as e:
-            logging.error('Slack Api Error: {}'.format(str(e)))
-            return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
+        player = Player.query.get(slack_id)
+        response_code = 200
+        if not player:
+            player = Player()
+            player.slack_id = slack_id
+            response_code = 201
+            db.session.add(player)
+
+        player_schema.load(request_data, instance=player)
 
         db.session.commit()
         player.merge_slack_user(slack_user)
 
-        return Response.success(player_schema.dump(player).data)
+        return Response.success(player_schema.dump(player).data, response_code)
 
-    def delete(self, id):
-        player = Player.query.get(id)
+    def delete(self, slack_id):
+        player = Player.query.get(slack_id)
         if not player:
             return Response.error(
                 {'general': [Response.NOT_FOUND.format("Player")]}, 404)

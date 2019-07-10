@@ -31,7 +31,7 @@ def test_get_many(mock_get_users, app):
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_get_single(mock_get_user, app):
+def test_get_single_player_exists_in_db(mock_get_user, app):
     mock_get_user.return_value = {
         "id": "TEST1",
         "profile": {
@@ -46,7 +46,7 @@ def test_get_single(mock_get_user, app):
         db.session.add(player)
         db.session.flush()
 
-        rv = app.test_client().get('/api/players/{}/'.format(player.id),
+        rv = app.test_client().get('/api/players/{}/'.format(player.slack_id),
                                    follow_redirects=True)
 
     json_data = json.loads(rv.data)
@@ -56,7 +56,7 @@ def test_get_single(mock_get_user, app):
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_post(mock_get_user, app):
+def test_get_single_player_not_exists_in_db(mock_get_user, app):
     mock_get_user.return_value = {
         "id": "TEST1",
         "profile": {
@@ -65,24 +65,18 @@ def test_post(mock_get_user, app):
         }
     }
 
-    data = {'slack_id': 'TEST', 'dishonors': 2}
+    with app.app_context():
+        rv = app.test_client().get('/api/players/TEST', follow_redirects=True)
 
-    with app.test_client() as tc:
-        rv = tc.post('/api/players/',
-                     data=json.dumps(data),
-                     follow_redirects=True)
     json_data = json.loads(rv.data)
 
-    assert json_data['data']['slack_id'] == data['slack_id']
-    with app.app_context():
-        p = Player.query.filter_by(slack_id=data['slack_id'])
-        assert p is not None
+    assert isinstance(json_data['data'], dict)
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_put(mock_get_user, app):
+def test_patch(mock_get_user, app):
     mock_get_user.return_value = {
-        "id": "TEST1",
+        "id": "TEST",
         "profile": {
             "real_name": "ogek",
             "display_name": "Giuseppe"
@@ -98,14 +92,43 @@ def test_put(mock_get_user, app):
         data = {'dishonors': 10}
 
         with app.test_client() as tc:
-            rv = tc.put('/api/players/{}/'.format(player.id),
-                        data=json.dumps(data),
-                        follow_redirects=True)
+            rv = tc.patch('/api/players/{}/'.format(player.slack_id),
+                          data=json.dumps(data),
+                          follow_redirects=True)
         json_data = json.loads(rv.data)
 
-        p = Player.query.get(player.id)
+        p = Player.query.get(player.slack_id)
 
+    assert rv.status_code == 200
     assert player.slack_id == p.slack_id
+    assert p.dishonors == data['dishonors']
+    assert json_data['data']['dishonors'] == data['dishonors']
+
+
+@mock.patch('utils.slackhelper.SlackHelper.get_user')
+def test_patch_create(mock_get_user, app):
+    mock_get_user.return_value = {
+        "id": "TEST",
+        "profile": {
+            "real_name": "ogek",
+            "display_name": "Giuseppe"
+        }
+    }
+
+    slack_id = "TEST"
+
+    with app.app_context():
+        data = {'dishonors': 10}
+        with app.test_client() as tc:
+            rv = tc.patch('/api/players/{}/'.format(slack_id),
+                          data=json.dumps(data),
+                          follow_redirects=True)
+        json_data = json.loads(rv.data)
+
+        p = Player.query.get(slack_id)
+
+    rv.status_code == 201
+    assert slack_id == p.slack_id
     assert p.dishonors == data['dishonors']
     assert json_data['data']['dishonors'] == data['dishonors']
 
@@ -119,11 +142,11 @@ def test_delete(app):
         db.session.flush()
 
         with app.test_client() as tc:
-            rv = tc.delete('/api/players/{}/'.format(player.id),
+            rv = tc.delete('/api/players/{}/'.format(player.slack_id),
                            follow_redirects=True)
         json_data = json.loads(rv.data)
 
-        p = Player.query.get(player.id)
+        p = Player.query.get(player.slack_id)
 
     assert p is None
     assert json_data['data']['slack_id'] == player.slack_id
@@ -140,31 +163,11 @@ def test_get_slack_error(mock_get_users, app):
     assert rv.status_code == 503
 
 
-def test_post_empty_data_error(app):
-    rv = app.test_client().post('/api/players/', data=json.dumps({}))
-    json_data = json.loads(rv.data)
+@mock.patch('utils.slackhelper.SlackHelper.get_users')
+def test_get_single_slack_error(mock_get_users, app):
+    mock_get_users.side_effect = SlackRequestFailed()
 
-    assert 'errors' in json_data
-    assert rv.status_code == 400
-
-
-def test_post_wrong_data_error(app):
-    data = {'dishonors': 1}
-
-    rv = app.test_client().post('/api/players/', data=json.dumps(data))
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert 'slack_id' in json_data['errors']
-    assert rv.status_code == 422
-
-
-@mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_post_slack_error(mock_get_user, app):
-    mock_get_user.side_effect = SlackRequestFailed()
-    data = {'slack_id': 'TEST', 'dishonors': 2}
-
-    rv = app.test_client().post('/api/players/', data=json.dumps(data))
+    rv = app.test_client().get('/api/players/TEST/')
     json_data = json.loads(rv.data)
 
     assert 'errors' in json_data
@@ -172,10 +175,18 @@ def test_post_slack_error(mock_get_user, app):
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_post_already_exists_error(mock_get_user, app):
-    player = Player()
-    player.slack_id = "TEST"
+def test_patch_slack_error(mock_get_user, app):
+    mock_get_user.side_effect = SlackRequestFailed()
 
+    rv = app.test_client().patch('/api/players/TEST/')
+    json_data = json.loads(rv.data)
+
+    assert 'errors' in json_data
+    assert rv.status_code == 503
+
+
+@mock.patch('utils.slackhelper.SlackHelper.get_user')
+def test_patch_empty_request(mock_get_user, app):
     mock_get_user.return_value = {
         "id": "TEST",
         "profile": {
@@ -183,93 +194,38 @@ def test_post_already_exists_error(mock_get_user, app):
             "display_name": "Giuseppe"
         }
     }
-    data = {'slack_id': "TEST", 'dishonors': 2}
 
-    with app.app_context():
-        db.session.add(player)
-        db.session.commit()
-
-    rv = app.test_client().post('/api/players/', data=json.dumps(data))
+    rv = app.test_client().patch('/api/players/TEST/',
+                                 data=json.dumps({}),
+                                 follow_redirects=True)
     json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
+    print(json_data)
     assert rv.status_code == 400
-
-
-def test_get_not_found_error(app):
-
-    rv = app.test_client().get('/api/players/7565/')
-    json_data = json.loads(rv.data)
-
     assert 'errors' in json_data
-    assert rv.status_code == 404
-
-
-def test_put_not_found_error(app):
-
-    data = {'dishonors': 2}
-
-    rv = app.test_client().put('/api/players/7565/', data=json.dumps(data))
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 404
-
-
-def test_put_empty_data_error(app):
-    player = Player()
-    player.slack_id = "TEST"
-
-    with app.app_context():
-        db.session.add(player)
-        db.session.commit()
-        rv = app.test_client().put('/api/players/{}/'.format(player.id),
-                                   data=json.dumps({}))
-
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 400
-
-
-def test_put_wrong_data_error(app):
-    data = {'dishonors': None}
-    player = Player()
-    player.slack_id = "TEST"
-
-    with app.app_context():
-        db.session.add(player)
-        db.session.commit()
-        rv = app.test_client().put('/api/players/{}/'.format(player.id),
-                                   data=json.dumps(data))
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert 'dishonors' in json_data['errors']
-    assert rv.status_code == 422
 
 
 @mock.patch('utils.slackhelper.SlackHelper.get_user')
-def test_put_slack_error(mock_get_user, app):
-    player = Player()
-    player.slack_id = "TEST"
-    mock_get_user.side_effect = SlackRequestFailed()
-    data = {'dishonors': 3}
+def test_patch_negative_dishonors(mock_get_user, app):
+    mock_get_user.return_value = {
+        "id": "TEST",
+        "profile": {
+            "real_name": "ogek",
+            "display_name": "Giuseppe"
+        }
+    }
+
+    slack_id = "TEST"
 
     with app.app_context():
-        db.session.add(player)
-        db.session.commit()
-        rv = app.test_client().put('/api/players/{}/'.format(player.id),
-                                   data=json.dumps(data))
-    json_data = json.loads(rv.data)
+        data = {'dishonors': -10}
+        with app.test_client() as tc:
+            rv = tc.patch('/api/players/{}/'.format(slack_id),
+                          data=json.dumps(data),
+                          follow_redirects=True)
+            json_data = json.loads(rv.data)
 
-    assert 'errors' in json_data
-    assert rv.status_code == 503
+            assert Player.query.count() == 0
 
-
-def test_delete_not_found_error(app):
-    rv = app.test_client().delete('/api/players/7565/')
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 404
+    assert rv.status_code == 422
+    assert "errors" in json_data
+    assert "dishonors" in json_data['errors']

@@ -8,8 +8,7 @@ ma = Marshmallow()
 
 class Player(db.Model):
     __tablename__ = 'players'
-    id = db.Column(db.Integer, primary_key=True)
-    slack_id = db.Column(db.String, nullable=False, unique=True)
+    slack_id = db.Column(db.String, nullable=False, primary_key=True)
     dishonors = db.Column(db.Integer,
                           nullable=False,
                           default=0,
@@ -28,7 +27,7 @@ class Player(db.Model):
             slack_user (dict):
                 representing Slack user
         """
-        if self.slack_id is None:
+        if not self.slack_id:
             self.slack_id = slack_user.get('id', "")
 
         self.nickname = slack_user.get('real_name', "")
@@ -42,9 +41,11 @@ class Player(db.Model):
 
 
 class PlayerSchema(ma.ModelSchema):
-    class Meta:
-        model = Player
 
+    slack_id = fields.String(required=True,
+                             validate=validate.Length(1),
+                             dump_only=True)
+    dishonors = fields.Integer(required=True, validate=validate.Range(min=0))
     nickname = fields.String(required=True,
                              validate=validate.Length(1),
                              dump_only=True)

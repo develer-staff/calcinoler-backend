@@ -8,4 +8,4 @@ api = Api(bp)
 
 # Routes
 api.add_resource(PlayersResource, "/players/")
-api.add_resource(PlayerResource, "/players/<int:id>/")
+api.add_resource(PlayerResource, "/players/<string:slack_id>/")
