@@ -154,25 +154,6 @@ def test_patch_create(mock_get_user, app):
     assert json_data['data']['dishonors'] == data['dishonors']
 
 
-def test_delete(app):
-
-    with app.app_context():
-        player = Player()
-        player.slack_id = "TEST"
-        db.session.add(player)
-        db.session.flush()
-
-        with app.test_client() as tc:
-            rv = tc.delete('/api/players/{}/'.format(player.slack_id),
-                           follow_redirects=True)
-        json_data = json.loads(rv.data)
-
-        p = Player.query.get(player.slack_id)
-
-    assert p is None
-    assert json_data['data']['slack_id'] == player.slack_id
-
-
 @mock.patch('utils.slackhelper.SlackHelper.get_users')
 def test_get_slack_error(mock_get_users, app):
     mock_get_users.side_effect = SlackRequestFailed()
@@ -279,11 +260,3 @@ def test_patch_negative_dishonors(mock_get_user, app):
     assert rv.status_code == 422
     assert "errors" in json_data
     assert "dishonors" in json_data['errors']
-
-
-def test_delete_not_found_error(app):
-    rv = app.test_client().delete('/api/players/7565/')
-    json_data = json.loads(rv.data)
-
-    assert 'errors' in json_data
-    assert rv.status_code == 404

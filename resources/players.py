@@ -82,13 +82,3 @@ class PlayerResource(Resource):
         player.merge_slack_user(slack_user)
 
         return Response.success(player_schema.dump(player).data, response_code)
-
-    def delete(self, slack_id):
-        player = Player.query.get(slack_id)
-        if not player:
-            return Response.error(
-                {'general': [Response.NOT_FOUND.format("Player")]}, 404)
-        db.session.delete(player)
-        db.session.commit()
-
-        return Response.success(player_schema.dump(player).data)
