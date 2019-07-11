@@ -1,4 +1,4 @@
-"""empty message
+"""Player table creation
 
 Revision ID: f7dea6d11e7f
 Revises: 5540202b6321
