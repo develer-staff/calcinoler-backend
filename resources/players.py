@@ -8,6 +8,7 @@ from models.player import Player, PlayerSchema
 from utils.slackhelper import SlackHelper, SlackRequestFailed, SlackUserNotFound
 from utils.players import enrich_slack_users_with_players
 from utils.response import Response
+from utils.schema import validate_schema_unknown_fields
 
 player_schema = PlayerSchema()
 players_schema = PlayerSchema(many=True)
@@ -54,7 +55,9 @@ class PlayerResource(Resource):
         if not request_data:
             return Response.error({'general': [Response.BODY_EMPTY]}, 400)
 
+        unk = validate_schema_unknown_fields(player_schema, request_data)
         errors = player_schema.validate(request_data)
+        errors = dict(**unk, **errors)
         if errors:
             return Response.error(errors, 422)
 
