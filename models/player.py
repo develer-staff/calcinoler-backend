@@ -32,9 +32,7 @@ class Player(db.Model):
 
         self.nickname = slack_user.get('real_name', "")
 
-        if "display_name" in slack_user:
-            self.name = slack_user['display_name']
-        elif "display_name" in slack_user.get('profile', {}):
+        if "display_name" in slack_user['profile']:
             self.name = slack_user['profile']['display_name']
         else:
             self.name = self.nickname

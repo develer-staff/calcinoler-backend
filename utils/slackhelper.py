@@ -50,13 +50,13 @@ class SlackHelper:
             Raises SlackRequestFailed if error occured.
         """
         try:
-            resp = self.slack_client.users_profile_get(user=slack_id)
+            resp = self.slack_client.users_info(user=slack_id)
         except errors.SlackApiError as e:
             err = e.response.get('error', 'unknown_error')
             if err == "user_not_found":
                 raise SlackUserNotFound(e)
             raise SlackRequestFailed(e)
-        return resp['profile']
+        return resp['user']
 
     @staticmethod
     def _search_user(users: list, searchTerm: str) -> list:
