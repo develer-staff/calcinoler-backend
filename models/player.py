@@ -28,7 +28,7 @@ class Player(db.Model):
                 representing Slack user
         """
         if not self.slack_id:
-            self.slack_id = slack_user.get('id', "")
+            self.slack_id = slack_user['id']
 
         self.nickname = slack_user.get('real_name', "")
 
