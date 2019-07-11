@@ -231,7 +231,6 @@ def test_patch_empty_request(mock_get_user, app):
                                  data=json.dumps({}),
                                  follow_redirects=True)
     json_data = json.loads(rv.data)
-    print(json_data)
     assert rv.status_code == 400
     assert 'errors' in json_data
 
