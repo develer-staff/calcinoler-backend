@@ -18,10 +18,10 @@ class SlackHelper:
         """
         self.slack_client = WebClient(token=token)
 
-    def get_users(self, search: str = None) -> list:
+    def get_users(self, searchTerm: str = None) -> list:
         """Return all Slack users.
 
-            search (str):
+            searchTerm (str):
                 if not None the function returns only Slack users
                 who contains the given string at least in one field.
 
@@ -35,8 +35,8 @@ class SlackHelper:
         except errors.SlackApiError as e:
             raise SlackRequestFailed(e.response.get('error', 'unknown_error'))
         slack_users = resp['members']
-        if search:
-            slack_users = SlackHelper._search_user(slack_users, search)
+        if searchTerm:
+            slack_users = SlackHelper._search_user(slack_users, searchTerm)
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
@@ -59,13 +59,13 @@ class SlackHelper:
         return resp['profile']
 
     @staticmethod
-    def _search_user(users: list, search: str) -> list:
+    def _search_user(users: list, searchTerm: str) -> list:
         """Searches user by string in all fields.
             No deep search.
 
             users (list(dict)):
                 Slack users from Slack Api.
-            search (str):
+            searchTerm (str):
                 String to find in fields.
 
             Returns list(dict) representing users who match
@@ -74,12 +74,12 @@ class SlackHelper:
         res = []
         for user in users:
             for key in user:
-                if user not in res:
-                    try:
-                        if search in user[key]:
-                            res.append(user)
-                    except Exception:
-                        pass
+                try:
+                    if searchTerm in user[key]:
+                        res.append(user)
+                        break
+                except Exception:
+                    pass
         return res
 
 
