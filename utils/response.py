@@ -1,5 +1,5 @@
 class Response:
-    """Util class for standardize response schema"""
+    """Util class to standardize response schema"""
 
     REQUEST_FAILED = "Request failed, try again later."
     BODY_EMPTY = "Request body is empty."
