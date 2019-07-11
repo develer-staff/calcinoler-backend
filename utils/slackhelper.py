@@ -9,6 +9,8 @@ class SlackHelper:
         - extract only one field
     """
 
+    SLACKBOT_ID = "USLACKBOT"
+
     def __init__(self, token: str):
         """Init official client.
 
@@ -18,10 +20,10 @@ class SlackHelper:
         """
         self.slack_client = WebClient(token=token)
 
-    def get_users(self, searchTerm: str = None) -> list:
+    def get_users(self, search_term: str = None) -> list:
         """Return all Slack users.
 
-            searchTerm (str):
+            search_term (str):
                 if not None the function returns only Slack users
                 who contains the given string at least in one field.
 
@@ -34,9 +36,9 @@ class SlackHelper:
             resp = self.slack_client.users_list()
         except errors.SlackApiError as e:
             raise SlackRequestFailed(e.response.get('error', 'unknown_error'))
-        slack_users = resp['members']
-        if searchTerm:
-            slack_users = SlackHelper._search_user(slack_users, searchTerm)
+        slack_users = self._strip_bots(resp['members'])
+        if search_term:
+            slack_users = SlackHelper._search_user(slack_users, search_term)
         return slack_users
 
     def get_user(self, slack_id: str) -> dict:
@@ -59,28 +61,40 @@ class SlackHelper:
         return resp['user']
 
     @staticmethod
-    def _search_user(users: list, searchTerm: str) -> list:
+    def _search_user(users: list, search_term: str) -> list:
         """Searches user by string in all fields.
             No deep search.
 
             users (list(dict)):
                 Slack users from Slack Api.
-            searchTerm (str):
+            search_term (str):
                 String to find in fields.
 
             Returns list(dict) representing users who match
             string at least in one field.
         """
         res = []
+        search_keys = ('email', 'display_name', 'real_name')
         for user in users:
-            for key in user:
-                try:
-                    if searchTerm in user[key]:
-                        res.append(user)
-                        break
-                except Exception:
-                    pass
+            for key in search_keys:
+                if search_term in user['profile'][key]:
+                    res.append(user)
+                    break
         return res
+
+    def _strip_bots(self, users: list) -> list:
+        """Removes bots from users list.
+
+            users (list(dict)):
+                Slack users from Slack Api.
+
+            Returns list(dict) of Slack user without bots
+        """
+
+        return [
+            user for user in users
+            if user['is_bot'] is False and user['id'] != self.SLACKBOT_ID
+        ]
 
 
 class SlackRequestFailed(Exception):
