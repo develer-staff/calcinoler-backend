@@ -191,7 +191,8 @@ def test_patch_create(mock_get_user, app):
 def test_patch_slack_error(mock_get_user, app):
     mock_get_user.side_effect = SlackRequestFailed()
 
-    rv = app.test_client().patch('/api/players/TEST/')
+    data = {"dishonors": 1}
+    rv = app.test_client().patch('/api/players/TEST/', data=json.dumps(data))
     json_data = json.loads(rv.data)
 
     assert 'errors' in json_data

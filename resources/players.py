@@ -50,6 +50,14 @@ class PlayerResource(Resource):
     def patch(self, slack_id):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
 
+        request_data = request.get_json(force=True)
+        if not request_data:
+            return Response.error({'general': [Response.BODY_EMPTY]}, 400)
+
+        errors = player_schema.validate(request_data)
+        if errors:
+            return Response.error(errors, 422)
+
         try:
             slack_user = slack.get_user(slack_id)
         except SlackUserNotFound as e:
@@ -59,14 +67,6 @@ class PlayerResource(Resource):
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
-
-        request_data = request.get_json(force=True)
-        if not request_data:
-            return Response.error({'general': [Response.BODY_EMPTY]}, 400)
-
-        errors = player_schema.validate(request_data)
-        if errors:
-            return Response.error(errors, 422)
 
         player = Player.query.get(slack_id)
         response_code = 200
