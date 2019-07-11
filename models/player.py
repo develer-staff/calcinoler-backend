@@ -30,12 +30,12 @@ class Player(db.Model):
         if not self.slack_id:
             self.slack_id = slack_user['id']
 
-        self.nickname = slack_user.get('real_name', "")
+        self.name = slack_user.get('real_name', "")
 
         if "display_name" in slack_user['profile']:
-            self.name = slack_user['profile']['display_name']
+            self.nickname = slack_user['profile']['display_name']
         else:
-            self.name = self.nickname
+            self.nickname = self.nickname
 
 
 class PlayerSchema(ma.ModelSchema):

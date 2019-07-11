@@ -9,9 +9,9 @@ def test_empty_player_merge_with_slack(mock_get_user, app):
     p = Player()
     mock_get_user.return_value = {
         "id": "TEST",
-        "real_name": "nick",
+        "real_name": "Test",
         'profile': {
-            'display_name': "Test"
+            'display_name': "nick"
         }
     }
 
@@ -32,9 +32,9 @@ def test_merge_player_with_slack(mock_get_user, app):
     p.dishonors = 4
     mock_get_user.return_value = {
         "id": "TEST",
-        "real_name": "nick",
+        "real_name": "Test",
         'profile': {
-            'display_name': "Test"
+            'display_name': "nick"
         }
     }
 
