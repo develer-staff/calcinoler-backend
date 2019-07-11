@@ -18,7 +18,7 @@ class PlayersResource(Resource):
         slack = SlackHelper(current_app.config['SLACK_TOKEN'])
         players = Player.query.all()
         try:
-            slack_users = slack.get_users(search=request.args.get("s"))
+            slack_users = slack.get_users(searchTerm=request.args.get("s"))
         except SlackRequestFailed as e:
             logging.error('Slack Api Error: {}'.format(str(e)))
             return Response.error({'general': [Response.REQUEST_FAILED]}, 503)
