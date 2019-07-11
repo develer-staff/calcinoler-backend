@@ -8,6 +8,7 @@ from utils.slackhelper import SlackHelper
 def test_empty_player_merge_with_slack(mock_get_user, app):
     p = Player()
     mock_get_user.return_value = {
+        "id": "TEST",
         "real_name": "nick",
         'profile': {
             'display_name': "Test"
@@ -30,6 +31,7 @@ def test_merge_player_with_slack(mock_get_user, app):
     p.name = "Giuseppe"
     p.dishonors = 4
     mock_get_user.return_value = {
+        "id": "TEST",
         "real_name": "nick",
         'profile': {
             'display_name': "Test"
